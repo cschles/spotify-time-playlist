@@ -33,12 +33,32 @@ def getTopTracks(header):
             break
     return topTracks
 
-token = 'BQDtmExWTg51Moxd6EtQyMJJvB5bDD-MvzG2ePXhvdWyF4U23r6EPCVn6UAGKym-AL3yeg4P44YiqO7_DF_sKkbkQ2eYoyOzlTOlUAotLMZxZuJBq-sJYSNOOh3L-2duX0uWtqeO9oMJr5_b7tWvTMXOnYIHJQp3zW6mwKk'
+def getAudioFeatures(tracks,header):
+    features = requests.get("https://api.spotify.com/v1/audio-features?ids='{}'".format(tracks),headers=header)
+    #print(features.content)
+    audFeat = features.json()
+    upbeat = []
+    slow = []
+    for i in range(1,19):
+        track = audFeat["audio_features"][i]['id']
+        danceability = audFeat["audio_features"][i]['danceability']
+        if (danceability) >= .50:
+            upbeat.append(track)
+        else:
+            slow.append(track)
+        i+=1
+    print(upbeat)
+    print(slow)
+
+
+token = 'BQAU6YuVWC_nAxj2hyzMvNVA3clrRDUQEvIX0ES5qcMgj89KItGYuVW9NBYHOY3TqE_mja-YnM8qu5ZyXZXBMMEJ-jCoEQjyVcCvEZmZB5GQMlTN3dew2zioSlB9_bmIPMyiBry-76ci648MH0DJy369We4DO4jS8gX_YOg'
 header = {
         'Accept': 'application/json',
         'Content-Type' : 'application/json',
         'Authorization': 'Bearer {}'.format(token)
     }
-#getTime(header)
+getTime(header)
 tracks = getTopTracks(header)
-print(tracks)
+tracks = ",".join(tracks)
+getAudioFeatures(tracks,header)
+
