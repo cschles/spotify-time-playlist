@@ -4,14 +4,14 @@ import pprint
 import datetime
 import re
 
-token = 'BQC2aQpulh7u-TWQjIwWMGHvflnw4amDcyKUvcGjoHRslcmmoigoVgm5pgZY9EAVwoU2oi9gXxoFXKenEj9rPJtBAjzaD73FRaU2oij1Dq59ru428557n_B93vCGDx-xTo_PX6TXN_BPiYt4EnTbYl8OUGxIkvMn-KJkJv1eu7ed63WGyrt23zDKzouQikQBu4Oz09aETupUnr-QFYjVoTwg6uBts-zyQzFeq7va6lK2fA'
+token = 'BQBN_f6WYwdMJCKrc5cbiPXmL6XhMILSbrZMFAf0eCYN_UXGvTOkOzrzdZ4GfoonKenDj4ANLECyBLc32CohTCcWRNlGW5mTjw70T4DbFpjpXKYCH4V0pEOtPSuex5qXkXIEGqQ9bZa9CZp6rM6kXuOeD8nTMYhRSCB2PaSocukPleEvJVSCBcUuUABpikQemJfIVySpkAs3z2n-rakVluegoPUnPjrZc93V38Oxfq0SsQ'
 header = {
         'Accept': 'application/json',
         'Content-Type' : 'application/json',
         'Authorization': 'Bearer {}'.format(token)
     }
-regex = re.compile('[0-9].*\\b')
-
+#regex = re.compile('[0-9].*\\b')
+regex = re.compile('(?!.*:).*')
 '''//TODO: 
 def getAuthorization():
  #   requests.get('/login', function(req,res))
@@ -25,72 +25,73 @@ def getTime(header):
     convertedTime = datetime.datetime.fromtimestamp(float(unixTime)/1000).strftime('%H')
     return convertedTime
 
-def getTracks(output,key):
+def getIDs(tracks):
+    ids = []
+    for track in tracks:
+        id = regex.search(track)
+        ids.append(id.group(0))
+    return ids
+       
+def getUri(output,key):
     i = 0
     tracks = []
     while (True):
         try:
-            url = str(output[key][i]["external_urls"])
-            id = regex.search(url)
-            tracks.append(id.group(0))
-            i+=1
-        except IndexError:
-            break
-    return tracks
-
-def getUri(output):
-    i = 0
-    tracks = []
-    while (True):
-        try:
-            uri = str(output["tracks"][i]["uri"])
+            uri = str(output[key][i]["uri"])
             tracks.append(uri)
             i+=1
         except IndexError:
             break
-    #print(tracks)
     return tracks
 
+
+
 def getTopTracks(header):
-    tracks = requests.get("https://api.spotify.com/v1/me/top/tracks?time_range=medium_term&offset=5",headers=header)
+    tracks = requests.get("https://api.spotify.com/v1/me/top/tracks?time_range=medium_term&limit=6",headers=header)
     toParse = tracks.json()
-    topTracks = getTracks(toParse,"items")
+    topTracks = getUri(toParse,"items")
     return topTracks
 
 def getAudioFeatures(tracks,header):
-    features = requests.get("https://api.spotify.com/v1/audio-features?ids='{}'".format(tracks),headers=header)
-    #print(features.content)
+    #TODO: Go through and check when spotify:track is needed and when just the track id is needed. Probably need to rethink how this is set up
+    trackIDs = getIDs(tracks)
+    trackIDs = ",".join(trackIDs)
+    features = requests.get("https://api.spotify.com/v1/audio-features?ids='{}'".format(trackIDs),headers=header)
     audFeat = features.json()
     upbeat = []
     slow = []
-    test = []
+    timely = []
     energy = .00
-    for i in range(1,6):
+    time = int(getTime(header))
+    #if 12 < time < 19:
+    for i in range(1,5):
         track = audFeat["audio_features"][i]['id']
         danceability = audFeat["audio_features"][i]['danceability']
         if (danceability) >= .50:
             upbeat.append(track)
         else:
             slow.append(track)
-        i+=1
+    #print(upbeat)
     time = int(getTime(header))
     if 12 < time < 19:
         energy = .90
         recs = getRecs(upbeat,energy)
-        test += recs
+        timely += upbeat
+        timely += recs
     else:
         energy = .50
         recs = getRecs(slow,energy)
-        test += recs
+        timely += slow
+        timely += recs
     #print(upbeat)
-    return test
+    return timely
 
 def getRecs(seedTracks,energy):
     seed = "%2C".join(seedTracks)
     recs = requests.get("https://api.spotify.com/v1/recommendations?seed_tracks={}&max_energy={}".format(seed,energy),headers=header)
     toParse = recs.json()
     #print(recs.content)
-    recTracks = getUri(toParse)
+    recTracks = getUri(toParse,"tracks")
     return recTracks
 
 def createPlaylist(): #TODO: The Spotify API is currently having issues, so will implement once they update
@@ -119,9 +120,10 @@ def assemblePlaylist(id):
     if playlist.status_code is 404:
         createPlaylist()
     tracks = getTopTracks(header)
-    tracks = ",".join(tracks)
+    #tracks = ",".join(tracks)
+    #print(tracks)
     recTracks = getAudioFeatures(tracks,header)
-    print(recTracks)
+    #print(recTracks)
     addTracks(id,recTracks)
 
 #addTracks("6CUzlkabx0XGnwb9PkbUvn",up)
