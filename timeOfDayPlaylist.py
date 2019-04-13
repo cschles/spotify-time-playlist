@@ -4,7 +4,7 @@ import pprint
 import datetime
 import re
 
-token = 'BQBxuXjxfEBVuwoDGS30uzxH-EFSddBS-vdmUBeyQllPTkGxoTKkbOOiVPE6CIfloOk_UB85qdi-uuBqZHO3_GtgScoZREzZt4j9WtGmkxkZNr2wnl7VakhANN6yxxEb0wem-2a6uL6K031iE8-aKOXvLP_uCcpN4mSzJS6lwv0lzSoW1F2AJBLiUohohoUhc4_1Wci_SMi2N3VgvyjO76Sc3VykPtK63Dr80yyBt7YLaw'
+token = 'BQD_EORBdv6jkrsBXdbFObvNZCoypPkov43YNEujizUpSNRTx4niOdV7-IGs_aVsuWE5zM7L0p02TXdwrLjz84i6yfIUCZhOlJgBKUQ6oMRLZr_AQRulqO4IaCoYOakolJQwZyZET_3XFanvUI1ij97ERCfYXXCgaSDfQ0Wh9fpWsWSxN8nf4tpDfUtuU0AdDFpQX9IrTvO-E-o3PPjpf7orTt3g2btzO6KAsiUxxA8cCQ'
 header = {
         'Accept': 'application/json',
         'Content-Type' : 'application/json',
@@ -12,12 +12,18 @@ header = {
     }
 
 regex = re.compile('(?!.*:).*')
-'''//TODO: 
+
+'''
+#TODO: 
 def getAuthorization():
  #   requests.get('/login', function(req,res))
-    scopes = 'user-read-playback-state user-top-read'
-}
+    clientID = "f44d7426f9ea48c5aae97329defade6f"
+    uri = "https://mysite"
+    scopes = 'user-read-playback-state%20user-top-read%20playlist-modify-private%20playlist-modify-public'
+    req = requests.get("https://accounts.spotify.com/authorize?client_id={}&response_type=code&redirect_uri={}&scope={}".format(clientID,uri,scopes))
+    print(req.content)
 '''
+
 def getTime():
     time = requests.get("https://api.spotify.com/v1/me/player", headers=header)
     output = time.json() 
@@ -85,13 +91,13 @@ def getRecs(seedTracks,energy):
     recTracks = getUri(toParse,"tracks")
     return recTracks
 
-def createPlaylist(): #TODO: The Spotify API is currently having issues, so will implement once they update
+def createPlaylist(): 
     info = {
     "name": "A Timely Playlist",
     "description": "A playlist that changes based on the hour",
     "public": 'true'
     }
-    r = requests.post("https://api.spotify.com/v1/playlists",data=json.dumps(info),headers=header)
+    r = requests.post("https://api.spotify.com/v1/users/pvmk/playlists",data=json.dumps(info),headers=header)
     print(r)
 
 def getPlaylist(id):
@@ -120,4 +126,6 @@ def assemblePlaylist(id):
     recTracks = getAudioFeatures(energy,tracks)
     addTracks(id,recTracks)
 
-assemblePlaylist('6CUzlkabx0XGnwb9PkbUvn')
+#assemblePlaylist('0VkB8Ab0GhbKQj9ocUioYP')
+createPlaylist()
+#getAuthorization()
