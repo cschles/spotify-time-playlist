@@ -3,26 +3,26 @@ import json
 import pprint
 import datetime
 import re
-
-token = 'BQD_EORBdv6jkrsBXdbFObvNZCoypPkov43YNEujizUpSNRTx4niOdV7-IGs_aVsuWE5zM7L0p02TXdwrLjz84i6yfIUCZhOlJgBKUQ6oMRLZr_AQRulqO4IaCoYOakolJQwZyZET_3XFanvUI1ij97ERCfYXXCgaSDfQ0Wh9fpWsWSxN8nf4tpDfUtuU0AdDFpQX9IrTvO-E-o3PPjpf7orTt3g2btzO6KAsiUxxA8cCQ'
-header = {
-        'Accept': 'application/json',
-        'Content-Type' : 'application/json',
-        'Authorization': 'Bearer {}'.format(token)
-    }
+import os
+from urllib.parse import urlencode
+from spotipy.oauth2 import SpotifyOAuth
 
 regex = re.compile('(?!.*:).*')
 
-'''
-#TODO: 
+ 
 def getAuthorization():
- #   requests.get('/login', function(req,res))
-    clientID = "f44d7426f9ea48c5aae97329defade6f"
-    uri = "https://mysite"
-    scopes = 'user-read-playback-state%20user-top-read%20playlist-modify-private%20playlist-modify-public'
-    req = requests.get("https://accounts.spotify.com/authorize?client_id={}&response_type=code&redirect_uri={}&scope={}".format(clientID,uri,scopes))
-    print(req.content)
-'''
+    clientID = os.environ.get('SPOTIPY_CLIENT_ID')
+    clientSecret = os.environ.get('SPOTIPY_CLIENT_SECRET')
+    uri = 'https://cschles.github.io/spotify-time-playlist/'
+    scope = "user-library-read"
+    auth=SpotifyOAuth(client_id=clientID,client_secret=clientSecret,redirect_uri=uri,scope=scope)
+    return auth.get_cached_token()
+
+header = {
+        'Accept': 'application/json',
+        'Content-Type' : 'application/json',
+        'Authorization': 'Bearer {}'.format(getAuthorization())
+    }
 
 def getTime():
     time = requests.get("https://api.spotify.com/v1/me/player", headers=header)
@@ -127,5 +127,5 @@ def assemblePlaylist(id):
     addTracks(id,recTracks)
 
 #assemblePlaylist('0VkB8Ab0GhbKQj9ocUioYP')
-createPlaylist()
-#getAuthorization()
+#createPlaylist()
+token = getAuthorization()
