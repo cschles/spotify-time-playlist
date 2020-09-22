@@ -28,9 +28,7 @@ header = {
     }
 
 def getTime():
-    time = requests.get("https://api.spotify.com/v1/me/player", headers=header)
-    output = time.json() 
-    unixTime = int(output["timestamp"])
+    unixTime = datetime.datetime.utcnow().timestamp()
     convertedTime = datetime.datetime.fromtimestamp(float(unixTime)/1000).strftime('%H')
     return convertedTime
 
@@ -96,7 +94,7 @@ def getRecs(seedTracks,energy):
 def createPlaylist(): 
     info = {
     "name": "A Timely Playlist",
-    "description": "A playlist that changes based on the hour",
+    "description": "A playlist that changes based on the hour. Created entirely by code.",
     "public": 'true'
     }
     r = requests.post("https://api.spotify.com/v1/users/pvmk/playlists",data=json.dumps(info),headers=header)
