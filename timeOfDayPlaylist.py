@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import requests
 import json
 import pprint
@@ -9,14 +10,16 @@ from spotipy.oauth2 import SpotifyOAuth
 
 regex = re.compile('(?!.*:).*')
 
- 
+
 def getAuthorization():
     clientID = os.environ.get('SPOTIPY_CLIENT_ID')
     clientSecret = os.environ.get('SPOTIPY_CLIENT_SECRET')
     uri = 'https://cschles.github.io/spotify-time-playlist/'
-    scope = "user-library-read"
+    scope = "user-read-playback-state user-top-read user-library-modify playlist-modify-private playlist-modify-public"
     auth=SpotifyOAuth(client_id=clientID,client_secret=clientSecret,redirect_uri=uri,scope=scope)
-    return auth.get_cached_token()
+    tokenStr = auth.get_access_token()
+    token = tokenStr['access_token']
+    return token
 
 header = {
         'Accept': 'application/json',
@@ -87,7 +90,6 @@ def getRecs(seedTracks,energy):
     seed = "%2C".join(seedTracks)
     recs = requests.get("https://api.spotify.com/v1/recommendations?seed_tracks={}&max_energy={}".format(seed,energy),headers=header)
     toParse = recs.json()
-    #print(recs.content)
     recTracks = getUri(toParse,"tracks")
     return recTracks
 
@@ -98,7 +100,9 @@ def createPlaylist():
     "public": 'true'
     }
     r = requests.post("https://api.spotify.com/v1/users/pvmk/playlists",data=json.dumps(info),headers=header)
-    print(r)
+    output= r.json()
+    uri = str(output['id'])
+    return uri
 
 def getPlaylist(id):
     playlist = requests.get("https://api.spotify.com/v1/playlists/{}".format(id),headers=header)
@@ -118,14 +122,17 @@ def energyLevel(time):
 
 def assemblePlaylist(id):
     playlist = getPlaylist(id)
-    if playlist.status_code is 404:
-        createPlaylist()
+    if playlist.status_code == 404:
+        id = createPlaylist()
+        print(id)
     tracks = getTopTracks()
     time = int(getTime())
     energy = energyLevel(time)
     recTracks = getAudioFeatures(energy,tracks)
     addTracks(id,recTracks)
 
-#assemblePlaylist('0VkB8Ab0GhbKQj9ocUioYP')
-#createPlaylist()
-token = getAuthorization()
+def main():
+    assemblePlaylist('')
+        
+if __name__ == "__main__":
+    main()
