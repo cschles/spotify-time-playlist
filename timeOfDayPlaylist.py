@@ -4,6 +4,7 @@ import json
 import pprint
 import datetime
 import re
+import random
 import os
 from urllib.parse import urlencode
 from spotipy.oauth2 import SpotifyOAuth
@@ -52,7 +53,8 @@ def getUri(output,key):
     return tracks
 
 def getTopTracks():
-    tracks = requests.get("https://api.spotify.com/v1/me/top/tracks?time_range=medium_term",headers=header)
+    randomRange =["medium_term","short_term","long_term"]
+    tracks = requests.get("https://api.spotify.com/v1/me/top/tracks?time_range={}".format(random.choice(randomRange)),headers=header)
     toParse = tracks.json()
     topTracks = getUri(toParse,"items")
     return topTracks
@@ -64,8 +66,11 @@ def getAudioFeatures(energy,tracks):
     audFeat = features.json()
     timely = []
     rec = []
+    ranTracks = random.sample(range(len(tracks)-2),17)
     if energy > .90:
-        for i in range(1,18):
+        for i in ranTracks:
+            if i == 0:
+                continue
             danceability = audFeat["audio_features"][i]['danceability']
             if danceability >= .50:
                 track = audFeat["audio_features"][i]['uri']
@@ -73,7 +78,9 @@ def getAudioFeatures(energy,tracks):
                 timely.append(track)
                 rec.append(id)
     else:
-        for i in range(1,18):
+         for i in ranTracks:
+            if i == 0:
+                continue
             danceability = audFeat["audio_features"][i]['danceability']
             if danceability < .50:
                 track = audFeat["audio_features"][i]['uri']
@@ -127,10 +134,12 @@ def assemblePlaylist(id):
     time = int(getTime())
     energy = energyLevel(time)
     recTracks = getAudioFeatures(energy,tracks)
-    addTracks(id,recTracks)
+    tracks = tracks + recTracks
+    addTracks(id,tracks)
 
 def main():
     assemblePlaylist('')
+  
         
 if __name__ == "__main__":
     main()
